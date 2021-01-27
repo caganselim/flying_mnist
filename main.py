@@ -21,7 +21,7 @@ def prepare_parser():
     parser.add_argument('--canv_width', default = 473, type= int, help = "Canvas image width")
     parser.add_argument('--use_trn', default = True, help = "Use MNIST train set")
     parser.add_argument('--num_videos', default = 100, type= int, help = "Number of episodes")
-    parser.add_argument('--num_frames', default = 60, type= int, help = "Number of frames in a video")
+    parser.add_argument('--num_frames', default = 30, type= int, help = "Number of frames in a video")
 
     # Digit specific params
     parser.add_argument('--use_coloring', default= True, help = "Apply coloring to digits")

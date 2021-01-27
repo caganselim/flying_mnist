@@ -21,6 +21,7 @@ class FlyingMNIST:
         self.colored_digits = []
         self.number_of_digits = None
         self.digit_sizes = None
+        self.digit_labels = None
         self.colors = None
         self.coor_list = None
         self.xlim = None
@@ -102,6 +103,8 @@ class FlyingMNIST:
         digit_indices = []
         digit_labels = np.random.choice(np.array(self.opts.digits), self.number_of_digits)
 
+        self.digit_labels = digit_labels
+
         for i in range(self.number_of_digits):
 
             # Returns a boolean array that is true for a specific digit, filter_digits[i]
@@ -127,13 +130,16 @@ class FlyingMNIST:
         color_basis = np.linspace(0, 1, 25)[4:]
 
         # Resize MNIST digits w.r.t sizes. Get size of each digit and interpolate it
+        colored_digits = []
+        grayscale_digits = []
         for i in range(self.number_of_digits):
 
             size = digit_sizes[i]
-            digit = self.mnist[i].transpose(2,1,0)
+            idx = digit_indices[i]
+            digit = self.mnist[idx].transpose(2,1,0)
             im = Image.fromarray(digit[:,:,0]).resize((size,size), Image.ANTIALIAS).convert("L")
 
-            self.grayscale_digits.append(im)
+            grayscale_digits.append(im)
             colored_digit = np.repeat(digit, repeats=3, axis=2)/255.
 
             if self.opts.use_coloring:
@@ -147,7 +153,10 @@ class FlyingMNIST:
             colored_digit[:, :, 2] *= color[2]
             colored_digit = (colored_digit*255.).clip(0, 255).astype(np.uint8)
             im = Image.fromarray(colored_digit).resize((size,size), Image.ANTIALIAS).convert("RGB")
-            self.colored_digits.append(im)
+            colored_digits.append(im)
+
+        self.colored_digits = colored_digits
+        self.grayscale_digits = grayscale_digits
 
     def update_coords(self):
 
