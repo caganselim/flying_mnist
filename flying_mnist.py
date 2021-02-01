@@ -4,6 +4,7 @@ import sys
 import os
 from PIL import Image
 import math
+import torch
 
 class FlyingMNIST:
 
@@ -82,7 +83,7 @@ class FlyingMNIST:
         os.mkdir(self.opts.target_dir)
 
         for i in range(self.opts.num_videos):
-            video_dir = os.path.join(self.opts.target_dir, str(i))
+            video_dir = os.path.join(self.opts.target_dir, f'{i:05d}')
             os.mkdir(video_dir)
             os.mkdir(os.path.join(video_dir, "flow"))
             os.mkdir(os.path.join(video_dir, "seg"))
@@ -123,7 +124,7 @@ class FlyingMNIST:
 
         # Velocity init
         direcs = np.pi * (np.random.rand(self.number_of_digits) * 2 - 1)
-        speeds = np.random.randint(self.opts.max_speed, size=self.number_of_digits) + 2
+        speeds = np.random.randint(self.opts.max_speed, size=self.number_of_digits) + 10
         self.veloc = np.asarray([(speed * math.cos(direc), speed * math.sin(direc)) for direc, speed in zip(direcs, speeds)])
 
         # Select colors from a linear space
@@ -176,6 +177,8 @@ class FlyingMNIST:
 
             if ymin < 0 or ymin > self.ylim:
                 self.veloc[i, 1] *= -1
+
+            next_coor_list = self.coor_list + self.veloc
 
         # Update the coordinates
         self.coor_list = next_coor_list
@@ -235,7 +238,7 @@ class FlyingMNIST:
 
     def generate_flow(self):
 
-        flow = np.zeros((1, 2, self.opts.canv_height, self.opts.canv_width), dtype=np.float32)
+        flow = torch.zeros((1, 2, self.opts.canv_height, self.opts.canv_width), dtype=torch.float32)
 
         # Now we have the velocity and positions. Calculate flow:
         for i in range(self.number_of_digits):
@@ -243,10 +246,12 @@ class FlyingMNIST:
             # Get image
             im = self.grayscale_digits[i]
             height, width = im.size
-            im = np.array(im)
+
+            im = torch.tensor(np.array(im))
 
             # Apply thresholding: convert to a mask
-            im[im > 0] = 1
+            im[im < 10] = 0
+            im[im > 0] = 255
 
             # Get coordinates
             x = int(self.coor_list[i][0])
@@ -258,9 +263,14 @@ class FlyingMNIST:
             f_x = flow[:, 0:1, y:y + height, x:x + width]
             f_y = flow[: ,1:2, y:y + height, x:x + width]
 
+            print(f"x: {x}, y: {y}, height: {height}, width: {width}")
+
+            print(f_x.shape)
+            print(f_y.shape)
+
             # Then apply AND operation to mask the existing flow.
-            mask_x = np.logical_and((f_x != 0), (im > 0))
-            mask_y = np.logical_and((f_y != 0), (im > 0))
+            mask_x = torch.logical_and((f_x != 0), (im > 0))
+            mask_y = torch.logical_and((f_y != 0), (im > 0))
 
             f_x[mask_x] = 0
             f_y[mask_y] = 0
@@ -273,17 +283,17 @@ class FlyingMNIST:
 
         return flow
 
-
     def write_data(self):
 
         # Generate data
         img = self.generate_img()
         seg = self.generate_seg()
-        #flow = self.generate_flow()
+        flow = self.generate_flow()
+        video_dir = os.path.join(self.opts.target_dir, f'{self.vid_idx:05d}')
 
-        video_dir = os.path.join(self.opts.target_dir, str(self.vid_idx))
-        img.save(os.path.join(video_dir, "vid", f'{self.frame_idx}.png'))
-        seg.save(os.path.join(video_dir, "seg", f'{self.frame_idx}.png'))
+        img.save(os.path.join(video_dir, "vid", f'{self.frame_idx:05d}.png'))
+        seg.save(os.path.join(video_dir, "seg", f'{self.frame_idx:05d}.png'))
+        torch.save(flow, os.path.join(video_dir, "flow", f'{self.frame_idx:05d}.pt'))
 
     def generate(self):
 
