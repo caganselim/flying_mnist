@@ -327,13 +327,15 @@ class FlyingMNIST:
     def generate(self):
 
         print("Generating Flying MNIST dataset...")
-
         for vid_idx in range(self.opts.num_videos):
-
             print(f"Processing video: {vid_idx}/{self.opts.num_videos}")
 
             self.init_env(vid_idx)
 
             for frame_idx in range(self.opts.num_frames):
+
+                if np.sum(self.boundary_lookup) == len(self.boundary_lookup):
+                    continue
+
                 self.write_data()
                 self.update_coords()
