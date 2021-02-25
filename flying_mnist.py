@@ -263,10 +263,9 @@ class FlyingMNIST:
             f_x = flow[:, 0:1, y:y + height, x:x + width]
             f_y = flow[: ,1:2, y:y + height, x:x + width]
 
-            print(f"x: {x}, y: {y}, height: {height}, width: {width}")
-
-            print(f_x.shape)
-            print(f_y.shape)
+            #print(f"x: {x}, y: {y}, height: {height}, width: {width}")
+            #print(f_x.shape)
+            #print(f_y.shape)
 
             # Then apply AND operation to mask the existing flow.
             mask_x = torch.logical_and((f_x != 0), (im > 0))
@@ -288,12 +287,12 @@ class FlyingMNIST:
         # Generate data
         img = self.generate_img()
         seg = self.generate_seg()
-        flow = self.generate_flow()
+        #flow = self.generate_flow()
         video_dir = os.path.join(self.opts.target_dir, f'{self.vid_idx:05d}')
 
         img.save(os.path.join(video_dir, "vid", f'{self.frame_idx:05d}.png'))
         seg.save(os.path.join(video_dir, "seg", f'{self.frame_idx:05d}.png'))
-        torch.save(flow, os.path.join(video_dir, "flow", f'{self.frame_idx:05d}.pt'))
+        #torch.save(flow, os.path.join(video_dir, "flow", f'{self.frame_idx:05d}.pt'))
 
     def generate(self):
 
