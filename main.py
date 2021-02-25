@@ -20,8 +20,8 @@ def prepare_parser():
     parser.add_argument('--canv_height', default = 473, type= int, help = "Canvas image height")
     parser.add_argument('--canv_width', default = 473, type= int, help = "Canvas image width")
     parser.add_argument('--use_trn', default = True, help = "Use MNIST train set")
-    parser.add_argument('--num_videos', default = 1000, type= int, help = "Number of episodes")
-    parser.add_argument('--num_frames', default = 10, type= int, help = "Number of frames in a video")
+    parser.add_argument('--num_videos', default = 1, type= int, help = "Number of episodes")
+    parser.add_argument('--num_frames', default = 150, type= int, help = "Number of frames in a video")
 
     # Digit specific params
     parser.add_argument('--use_coloring', default= True, help = "Apply coloring to digits")
@@ -29,8 +29,10 @@ def prepare_parser():
     parser.add_argument('--max_speed', default = 30, type= int, help = "Max speed of a digit")
     parser.add_argument('--digit_size_min', default = 30, type= int, help = "Minimum digit size")
     parser.add_argument('--digit_size_max', default = 120, type= int, help = "Maximum digit size")
+    parser.add_argument('--leaving_digits', default = True, type= str, help = "Allows leaving digits")
     parser.add_argument("--digits", nargs="+", default=[1, 2, 3, 4, 5, 6, 7, 8, 9, 0])
     parser.add_argument('--target_dir', default = "./val", type= str, help = "Target dir to save")
+
 
     return parser
 

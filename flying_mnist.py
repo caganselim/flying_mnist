@@ -28,6 +28,7 @@ class FlyingMNIST:
         self.xlim = None
         self.ylim = None
         self.veloc = None
+        self.boundary_lookup=None
         self.PALETTE = [0, 0, 0, 128, 0, 0, 0, 128, 0, 128, 128, 0, 0, 0, 128, 128, 0, 128, 0, 128, 128, 128, 128, 128, 64, 0, 0, 191, 0, 0, 64, 128, 0, 191, 128, 0, 64, 0, 128]
 
         self.frame_idx = 0
@@ -80,14 +81,22 @@ class FlyingMNIST:
 
     def create_dirs(self):
 
+        # Create VOS style dataset generation.
         os.mkdir(self.opts.target_dir)
+        os.mkdir(os.path.join(self.opts.target_dir, "seg"))
+        os.mkdir(os.path.join(self.opts.target_dir, "flow"))
+        os.mkdir(os.path.join(self.opts.target_dir, "vid"))
 
         for i in range(self.opts.num_videos):
-            video_dir = os.path.join(self.opts.target_dir, f'{i:05d}')
+            flow_dir = os.path.join(self.opts.target_dir, "flow", f'{i:05d}')
+            os.mkdir(flow_dir)
+
+            video_dir = os.path.join(self.opts.target_dir, "vid", f'{i:05d}')
             os.mkdir(video_dir)
-            os.mkdir(os.path.join(video_dir, "flow"))
-            os.mkdir(os.path.join(video_dir, "seg"))
-            os.mkdir(os.path.join(video_dir, "vid"))
+
+            seg_dir = os.path.join(self.opts.target_dir, "seg", f'{i:05d}')
+            os.mkdir(seg_dir)
+
 
     def init_env(self, vid_idx = 0):
 
@@ -121,6 +130,8 @@ class FlyingMNIST:
         self.xlim = self.opts.canv_width - self.opts.digit_size_max - 1
         self.ylim = self.opts.canv_height - self.opts.digit_size_max - 1
         self.coor_list = np.floor(np.asarray([(np.random.rand() * self.xlim, np.random.rand() * self.ylim) for _ in range(self.number_of_digits)]))
+
+        print(self.coor_list.shape)
 
         # Velocity init
         direcs = np.pi * (np.random.rand(self.number_of_digits) * 2 - 1)
@@ -158,6 +169,8 @@ class FlyingMNIST:
 
         self.colored_digits = colored_digits
         self.grayscale_digits = grayscale_digits
+        self.boundary_lookup = np.zeros(self.number_of_digits, dtype=np.bool)
+
 
     def update_coords(self):
 
@@ -172,11 +185,26 @@ class FlyingMNIST:
             xmin, ymin = coord[0], coord[1]
 
             # Check that if we hit the boundaries
-            if xmin < 0 or xmin > self.xlim:
-                self.veloc[i, 0] *= -1
+            x_check = (xmin < 0 or xmin > self.xlim)
+            y_check = (ymin < 0 or ymin > self.ylim)
 
-            if ymin < 0 or ymin > self.ylim:
-                self.veloc[i, 1] *= -1
+            if y_check or x_check:
+
+                # We hit the wall.
+                # Decide to leave the scene
+                if self.boundary_lookup[i]:
+                    continue
+
+                if np.random.rand() < 0.5:
+                    if x_check:
+                        self.veloc[i, 0] *= -1
+                    if y_check:
+                        self.veloc[i, 1] *= -1
+
+                else:
+
+                    self.boundary_lookup[i] = True
+
 
             next_coor_list = self.coor_list + self.veloc
 
@@ -288,10 +316,12 @@ class FlyingMNIST:
         img = self.generate_img()
         seg = self.generate_seg()
         #flow = self.generate_flow()
-        video_dir = os.path.join(self.opts.target_dir, f'{self.vid_idx:05d}')
 
-        img.save(os.path.join(video_dir, "vid", f'{self.frame_idx:05d}.png'))
-        seg.save(os.path.join(video_dir, "seg", f'{self.frame_idx:05d}.png'))
+        vid_dir = os.path.join(self.opts.target_dir, "vid", f'{self.vid_idx:05d}', f'{self.frame_idx:05d}.png')
+        seg_dir = os.path.join(self.opts.target_dir, "seg", f'{self.vid_idx:05d}', f'{self.frame_idx:05d}.png')
+
+        img.save(vid_dir)
+        seg.save(seg_dir)
         #torch.save(flow, os.path.join(video_dir, "flow", f'{self.frame_idx:05d}.pt'))
 
     def generate(self):
