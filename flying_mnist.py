@@ -12,6 +12,7 @@ class FlyingMNIST:
 
         # Save options
         self.opts = opts
+        self.knob = 150
 
         # Load full dataset
         self.mnist = None
@@ -222,9 +223,8 @@ class FlyingMNIST:
             digit_bin = self.grayscale_digits[i]
             digit_mask = np.array(digit_bin)
 
-            knob = 150
-            digit_mask[digit_mask < knob] = 0
-            digit_mask[digit_mask > knob] = 255
+            digit_mask[digit_mask < self.knob] = 0
+            digit_mask[digit_mask > self.knob] = 255
             digit_mask = Image.fromarray(digit_mask).convert('L')
 
             # Prepare coords
@@ -249,9 +249,8 @@ class FlyingMNIST:
             digit_mask = np.array(digit_bin)
             label_mask = np.copy(digit_mask)
 
-            knob = 150
-            digit_mask[digit_mask < knob] = 0
-            digit_mask[digit_mask >= knob] = 255
+            digit_mask[digit_mask < self.knob] = 0
+            digit_mask[digit_mask >= self.knob] = 255
             digit_mask = Image.fromarray(digit_mask).convert('L')
 
             # Prepare coords
@@ -259,8 +258,8 @@ class FlyingMNIST:
             coor = (coor[0], coor[1])
 
             # Seg mask
-            label_mask[label_mask < knob] = 0
-            label_mask[label_mask >= knob] = i + 1
+            label_mask[label_mask < self.knob] = 0
+            label_mask[label_mask >= self.knob] = i + 1
             instance = Image.fromarray(label_mask).convert('P')
 
             # Paste it
