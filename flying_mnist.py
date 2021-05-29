@@ -83,18 +83,18 @@ class FlyingMNIST:
 
         # Create VOS style dataset generation.
         os.mkdir(self.opts.target_dir)
-        os.mkdir(os.path.join(self.opts.target_dir, "seg"))
-        os.mkdir(os.path.join(self.opts.target_dir, "flow"))
-        os.mkdir(os.path.join(self.opts.target_dir, "vid"))
+        os.mkdir(os.path.join(self.opts.target_dir, "JPEGImages"))
+        os.mkdir(os.path.join(self.opts.target_dir, "Annotations"))
+        os.mkdir(os.path.join(self.opts.target_dir, "OpticalFlow"))
 
         for i in range(self.opts.num_videos):
-            flow_dir = os.path.join(self.opts.target_dir, "flow", f'{i:05d}')
+            flow_dir = os.path.join(self.opts.target_dir, "OpticalFlow", f'{i:05d}')
             os.mkdir(flow_dir)
 
-            video_dir = os.path.join(self.opts.target_dir, "vid", f'{i:05d}')
+            video_dir = os.path.join(self.opts.target_dir, "JPEGImages", f'{i:05d}')
             os.mkdir(video_dir)
 
-            seg_dir = os.path.join(self.opts.target_dir, "seg", f'{i:05d}')
+            seg_dir = os.path.join(self.opts.target_dir, "Annotations", f'{i:05d}')
             os.mkdir(seg_dir)
 
 
@@ -221,8 +221,10 @@ class FlyingMNIST:
             # Create a mask
             digit_bin = self.grayscale_digits[i]
             digit_mask = np.array(digit_bin)
-            digit_mask[digit_mask < 40] = 0
-            digit_mask[digit_mask > 0] = 255
+
+            knob = 150
+            digit_mask[digit_mask < knob] = 0
+            digit_mask[digit_mask > knob] = 255
             digit_mask = Image.fromarray(digit_mask).convert('L')
 
             # Prepare coords
@@ -245,8 +247,11 @@ class FlyingMNIST:
             # Create a mask
             digit_bin = self.grayscale_digits[i]
             digit_mask = np.array(digit_bin)
-            digit_mask[digit_mask < 40] = 0
-            digit_mask[digit_mask > 0] = 255
+            label_mask = np.copy(digit_mask)
+
+            knob = 150
+            digit_mask[digit_mask < knob] = 0
+            digit_mask[digit_mask > knob] = 255
             digit_mask = Image.fromarray(digit_mask).convert('L')
 
             # Prepare coords
@@ -254,9 +259,8 @@ class FlyingMNIST:
             coor = (coor[0], coor[1])
 
             # Seg mask
-            label_mask = np.array(digit_bin)
-            label_mask[label_mask < 10] = 0
-            label_mask[label_mask > 0] = i + 1
+            label_mask[label_mask < knob] = 0
+            label_mask[label_mask > knob] = i + 1
             instance = Image.fromarray(label_mask).convert('P')
 
             # Paste it
@@ -317,12 +321,12 @@ class FlyingMNIST:
         seg = self.generate_seg()
         #flow = self.generate_flow()
 
-        vid_dir = os.path.join(self.opts.target_dir, "vid", f'{self.vid_idx:05d}', f'{self.frame_idx:05d}.png')
-        seg_dir = os.path.join(self.opts.target_dir, "seg", f'{self.vid_idx:05d}', f'{self.frame_idx:05d}.png')
+        vid_dir = os.path.join(self.opts.target_dir, "JPEGImages", f'{self.vid_idx:05d}', f'{self.frame_idx:05d}.png')
+        seg_dir = os.path.join(self.opts.target_dir, "Annotations", f'{self.vid_idx:05d}', f'{self.frame_idx:05d}.png')
 
         img.save(vid_dir)
         seg.save(seg_dir)
-        #torch.save(flow, os.path.join(video_dir, "flow", f'{self.frame_idx:05d}.pt'))
+        #torch.save(flow, os.path.join(self.opts.target_dir, "OpticalFlow", f'{self.frame_idx:05d}.pt'))
 
     def generate(self):
 
