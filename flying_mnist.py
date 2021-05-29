@@ -251,7 +251,7 @@ class FlyingMNIST:
 
             knob = 150
             digit_mask[digit_mask < knob] = 0
-            digit_mask[digit_mask > knob] = 255
+            digit_mask[digit_mask >= knob] = 255
             digit_mask = Image.fromarray(digit_mask).convert('L')
 
             # Prepare coords
@@ -260,7 +260,7 @@ class FlyingMNIST:
 
             # Seg mask
             label_mask[label_mask < knob] = 0
-            label_mask[label_mask > knob] = i + 1
+            label_mask[label_mask >= knob] = i + 1
             instance = Image.fromarray(label_mask).convert('P')
 
             # Paste it
