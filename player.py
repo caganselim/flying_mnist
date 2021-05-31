@@ -4,6 +4,34 @@ import torch
 import numpy as np
 import matplotlib.pyplot as plt
 
+
+def mesh_grid(B, H, W):
+    # mesh grid
+    x_base = torch.arange(0, W, dtype=torch.float32).repeat(B, H, 1)  # BHW
+    y_base = torch.arange(0, H, dtype=torch.float32).repeat(B, W, 1).transpose(1, 2)  # BHW
+
+    base_grid = torch.stack([x_base, y_base], 1)  # B2HW
+    return base_grid
+
+def norm_grid(v_grid):
+
+    _, _, H, W = v_grid.size()
+
+    # scale grid to [-1,1]
+    v_grid_norm = torch.zeros_like(v_grid)
+    v_grid_norm[:, 0, :, :] = 2.0 * v_grid[:, 0, :, :] / float(W - 1) - 1.0
+    v_grid_norm[:, 1, :, :] = 2.0 * v_grid[:, 1, :, :] / float(H - 1) - 1.0
+    return v_grid_norm.permute(0, 2, 3, 1)  # BHW2
+
+
+def get_colorwheel_img(size = 473):
+
+    base_grid = mesh_grid(1, size, size)  # B2HW
+    v_grid = norm_grid(base_grid) # BHW2
+    img = flow_to_img(v_grid[0].numpy())
+
+    return img
+
 def make_colorwheel():
     """
     Generates a color wheel for optical flow visualization as presented in:
@@ -123,9 +151,9 @@ def flow_to_img(flow_uv, clip_flow=None, convert_to_bgr=False):
 
 
 vid_dir= "./trn"
-video_id = "00002"
-seq_len = len(os.listdir(os.path.join(vid_dir, "JPEGImages")))
-fig, axs = plt.subplots(1,5)
+video_id = "00000"
+seq_len = len(os.listdir(os.path.join(vid_dir, "JPEGImages", video_id)))
+fig, axs = plt.subplots(1,6, figsize=(20,10))
 
 for i in range(seq_len -1):
 
@@ -156,6 +184,9 @@ for i in range(seq_len -1):
     axs[4].set_title("Flow")
     axs[4].imshow(flow_out)
 
+    axs[5].set_title("Colorwheel")
+    axs[5].imshow(get_colorwheel_img())
+
     axs[0].axes.get_xaxis().set_visible(False)
     axs[0].axes.get_yaxis().set_visible(False)
     axs[1].axes.get_xaxis().set_visible(False)
@@ -166,6 +197,8 @@ for i in range(seq_len -1):
     axs[3].axes.get_yaxis().set_visible(False)
     axs[4].axes.get_xaxis().set_visible(False)
     axs[4].axes.get_yaxis().set_visible(False)
+    axs[5].axes.get_xaxis().set_visible(False)
+    axs[5].axes.get_yaxis().set_visible(False)
 
     fig.savefig(f"./out/{i:02d}.png")
     plt.close(fig)
