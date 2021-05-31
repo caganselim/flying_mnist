@@ -267,6 +267,8 @@ class FlyingMNIST:
 
         return seg
 
+
+
     def generate_flow(self):
 
         flow = torch.zeros((1, 2, self.opts.canv_height, self.opts.canv_width), dtype=torch.float32)
@@ -277,39 +279,100 @@ class FlyingMNIST:
             # Get image
             im = self.grayscale_digits[i]
             height, width = im.size
-
-            im = torch.tensor(np.array(im))
+            digit_mask = torch.tensor(np.array(im), dtype=torch.float32)
 
             # Apply thresholding: convert to a mask
-            im[im < 10] = 0
-            im[im > 0] = 255
+            digit_mask[digit_mask < self.knob] = 0
+            digit_mask[digit_mask >= self.knob] = 1
 
             # Get coordinates
             x = int(self.coor_list[i][0])
             y = int(self.coor_list[i][1])
 
-            # Update flows. Perform masking for the accurate flow.
+            print("Digit height: ", height, " Digit width: ", width, " x: ", x, " y: ", y)
 
+            if x >= 473 or y >= 473 or x < -width or y < -height:
+                continue
+
+            if x < 0:
+
+                x_start =-x-1
+                x_end = width-1
+
+                digit_mask = digit_mask[:,x_start:x_end]
+                print("1 => ", x_start, " - ", x_end)
+
+            if y < 0:
+
+                y_start = -y-1
+                y_end = height-1
+                digit_mask = digit_mask[y_start:y_end,:]
+                print("2 => ", y_start, " - ", y_end)
+
+            if (x + width > self.opts.canv_width - 1):
+
+                xlim = self.opts.canv_width - 1 - x
+                clipped_width = xlim
+                digit_mask = digit_mask[:, 0:clipped_width]
+
+                print("3 => ",digit_mask.shape, " x ", x, " xlim: ", xlim, " clipped_width: ", clipped_width)
+
+            if (y + height > self.opts.canv_height - 1):
+                ylim = self.opts.canv_height - 1 - y
+                clipped_height =  ylim
+                digit_mask = digit_mask[0:clipped_height, :]
+
+                print("4 => ", digit_mask.shape, " y ", y, " ylim: ", ylim, " clipped_height: ", clipped_height)
+
+
+            # Process the limits
+            x_0 = x if x > 0 else 0
+            y_0 = y if y > 0 else 0
+            x_1 = (self.opts.canv_width - 1) if (x + width > self.opts.canv_width - 1) else x + width
+            y_1 = (self.opts.canv_height - 1) if (y + height > self.opts.canv_height - 1) else y + height
+
+            # Update flows. Perform masking for the accurate flow.
             # First, extract mask from the pre-existing flow.
-            f_x = flow[:, 0:1, y:y + height, x:x + width]
-            f_y = flow[: ,1:2, y:y + height, x:x + width]
+            f_x = flow[:, 0:1, y_0:y_1, x_0:x_1]
+            f_y = flow[:, 1:2, y_0:y_1, x_0:x_1]
 
             #print(f"x: {x}, y: {y}, height: {height}, width: {width}")
             #print(f_x.shape)
             #print(f_y.shape)
 
             # Then apply AND operation to mask the existing flow.
-            mask_x = torch.logical_and((f_x != 0), (im > 0))
-            mask_y = torch.logical_and((f_y != 0), (im > 0))
+            digit_h, digit_w = f_x.shape[2], f_x.shape[3]
+
+            print("f_x: ", f_x.shape)
+            print("f_y: ", f_y.shape)
+            print("digit_mask: ", digit_mask.shape)
+
+            # digit mask => 88x88, 66x66 etc
+            mask_x = torch.logical_and((f_x != 0), (digit_mask > 0))
+            mask_y = torch.logical_and((f_y != 0), (digit_mask > 0))
 
             f_x[mask_x] = 0
             f_y[mask_y] = 0
 
-            flow[:, 0:1, y:y + height, x:x + width] = f_x
-            flow[: ,1:2, y:y + height, x:x + width] = f_y
+            print("mask_x", mask_x.shape)
+            print("mask_y", mask_y.shape)
 
-            flow[:, 0:1, y:y + height, x:x + width] += self.veloc[i][0] * im # x direction
-            flow[: ,1:2, y:y + height, x:x + width] += self.veloc[i][1] * im # y direction
+            print("A) ", flow[:, 0:1, y:y + height, x:x + width].shape)
+            print("B) ", flow[: ,1:2, y:y + height, x:x + width].shape)
+
+            flow[:, 0:1, y_0:y_1, x_0:x_1] = f_x
+            flow[:, 1:2, y_0:y_1, x_0:x_1] = f_y
+
+            print("A) ", flow[:, 0:1, y:y + digit_h, x:x + width].shape)
+            print("B) ", flow[: ,1:2, y:y + digit_h, x:x + width].shape)
+
+            print("=> ", y_0, "=> ", y_1, "=> ", x_0, "=> ", x_1)
+            print("=> " , self.veloc[i][0] , " - ", self.veloc[i][1])
+
+            flow[:, 0:1, y_0:y_1, x_0:x_1] += self.veloc[i][0] * digit_mask # x direction
+            flow[:, 1:2, y_0:y_1, x_0:x_1] += self.veloc[i][1] * digit_mask # y direction
+
+        print("FLOW: " , flow.max())
 
         return flow
 
@@ -318,14 +381,15 @@ class FlyingMNIST:
         # Generate data
         img = self.generate_img()
         seg = self.generate_seg()
-        #flow = self.generate_flow()
+        flow = self.generate_flow()
 
         vid_dir = os.path.join(self.opts.target_dir, "JPEGImages", f'{self.vid_idx:05d}', f'{self.frame_idx:05d}.png')
         seg_dir = os.path.join(self.opts.target_dir, "Annotations", f'{self.vid_idx:05d}', f'{self.frame_idx:05d}.png')
 
         img.save(vid_dir)
         seg.save(seg_dir)
-        #torch.save(flow, os.path.join(self.opts.target_dir, "OpticalFlow", f'{self.frame_idx:05d}.pt'))
+        print("FLOWOVIC => " , flow.max())
+        torch.save(flow, os.path.join(self.opts.target_dir, "OpticalFlow", f'{self.vid_idx:05d}', f'{self.frame_idx:05d}.pt'))
 
     def generate(self):
 

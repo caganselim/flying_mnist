@@ -122,30 +122,36 @@ def flow_to_img(flow_uv, clip_flow=None, convert_to_bgr=False):
     return flow_uv_to_colors(u, v, convert_to_bgr)
 
 
-vid_dir= "./val/00001"
-seq_len = os.listdir(os.path.join(vid_dir, "vid"))
-
+vid_dir= "./trn"
+video_id = "00002"
+seq_len = len(os.listdir(os.path.join(vid_dir, "JPEGImages")))
 fig, axs = plt.subplots(1,5)
 
-for i in range(len(seq_len) -1):
+for i in range(seq_len -1):
 
-    im_1 = np.array(Image.open(os.path.join(vid_dir, "vid", f"{i:05d}.png")))
-    im_2 = np.array(Image.open(os.path.join(vid_dir, "vid", f"{i:05d}.png")))
-    flow = torch.load(os.path.join(vid_dir, "flow", f"{i:05d}.pt"))
+    im_1 = np.array(Image.open(os.path.join(vid_dir, "JPEGImages", video_id, f"{i:05d}.png")))
+    im_2 = np.array(Image.open(os.path.join(vid_dir, "JPEGImages", video_id, f"{i:05d}.png")))
+    flow = torch.load(os.path.join(vid_dir, "OpticalFlow", video_id, f"{i:05d}.pt"))
+    print("flow: ", flow.max())
+
     flw = flow[0].numpy().transpose(1, 2, 0)
-    flow_out = flow_to_img(flw)
+
+    print(flw.min())
+    flow_out = flow_to_img(flw/473.)
+
+    print(flow_out)
 
     axs[0].set_title("Image 1")
     axs[0].imshow(im_1)
 
     axs[1].set_title("Seg 1")
-    axs[1].imshow(plt.imread(os.path.join(vid_dir, "seg", f"{i:05d}.png")))
+    axs[1].imshow(plt.imread(os.path.join(vid_dir, "Annotations", video_id, f"{i:05d}.png")))
 
     axs[2].set_title("Image 2")
     axs[2].imshow(im_2)
 
     axs[3].set_title("Seg 2")
-    axs[3].imshow(plt.imread(os.path.join(vid_dir, "seg", f"{(i+1):05d}.png")))
+    axs[3].imshow(plt.imread(os.path.join(vid_dir, "Annotations", video_id, f"{(i+1):05d}.png")))
 
     axs[4].set_title("Flow")
     axs[4].imshow(flow_out)
@@ -162,3 +168,4 @@ for i in range(len(seq_len) -1):
     axs[4].axes.get_yaxis().set_visible(False)
 
     fig.savefig(f"./out/{i:02d}.png")
+    plt.close(fig)
