@@ -4,7 +4,6 @@ import torch
 import numpy as np
 import matplotlib.pyplot as plt
 
-
 def mesh_grid(B, H, W):
     # mesh grid
     x_base = torch.arange(0, W, dtype=torch.float32).repeat(B, H, 1)  # BHW
