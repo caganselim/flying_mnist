@@ -199,5 +199,5 @@ for i in range(seq_len -1):
     axs[5].axes.get_xaxis().set_visible(False)
     axs[5].axes.get_yaxis().set_visible(False)
 
-    fig.savefig(f"./out/{i:02d}.png")
+    fig.savefig(f"./out/{i:03d}.png")
     plt.close(fig)

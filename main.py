@@ -17,10 +17,10 @@ def prepare_parser():
     parser = argparse.ArgumentParser()
 
     # Input params
-    parser.add_argument('--canv_height', default = 473, type= int, help = "Canvas image height")
-    parser.add_argument('--canv_width', default = 473, type= int, help = "Canvas image width")
+    parser.add_argument('--canv_height', default = 512, type= int, help = "Canvas image height")
+    parser.add_argument('--canv_width', default = 768, type= int, help = "Canvas image width")
     parser.add_argument('--use_trn', default = True, help = "Use MNIST train set")
-    parser.add_argument('--num_videos', default = 10, type= int, help = "Number of episodes")
+    parser.add_argument('--num_videos', default = 100, type= int, help = "Number of episodes")
     parser.add_argument('--num_frames', default = 150, type= int, help = "Number of frames in a video")
 
     # Digit specific params
@@ -32,7 +32,6 @@ def prepare_parser():
     parser.add_argument('--leaving_digits', default = True, type= str, help = "Allows leaving digits")
     parser.add_argument("--digits", nargs="+", default=[1, 2, 3, 4, 5, 6, 7, 8, 9, 0])
     parser.add_argument('--target_dir', default = "./trn", type= str, help = "Target dir to save")
-
 
     return parser
 

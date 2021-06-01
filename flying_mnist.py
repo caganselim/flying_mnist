@@ -382,7 +382,7 @@ class FlyingMNIST:
         seg = self.generate_seg()
         flow = self.generate_flow()
 
-        vid_dir = os.path.join(self.opts.target_dir, "JPEGImages", f'{self.vid_idx:05d}', f'{self.frame_idx:05d}.png')
+        vid_dir = os.path.join(self.opts.target_dir, "JPEGImages", f'{self.vid_idx:05d}', f'{self.frame_idx:05d}.jpg')
         seg_dir = os.path.join(self.opts.target_dir, "Annotations", f'{self.vid_idx:05d}', f'{self.frame_idx:05d}.png')
 
         img.save(vid_dir)
