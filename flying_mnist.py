@@ -6,6 +6,24 @@ from PIL import Image
 import math
 import torch
 
+def writeFlowFile(filename, uv):
+    """
+    According to the matlab code of Deqing Sun and c++ source code of Daniel Scharstein
+    Contact: dqsun@cs.brown.edu
+    Contact: schar@middlebury.edu
+    """
+    TAG_STRING = np.array(202021.25, dtype=np.float32)
+    if uv.shape[2] != 2:
+        sys.exit("writeFlowFile: flow must have two bands!");
+    H = np.array(uv.shape[0], dtype=np.int32)
+    W = np.array(uv.shape[1], dtype=np.int32)
+    with open(filename, 'wb') as f:
+        f.write(TAG_STRING.tobytes())
+        f.write(W.tobytes())
+        f.write(H.tobytes())
+        f.write(uv.tobytes())
+
+
 class FlyingMNIST:
 
     def __init__(self, opts):
@@ -385,14 +403,22 @@ class FlyingMNIST:
         seg = self.generate_seg()
         flow = self.generate_flow()
 
+        # Flow shape: torch.Size([1, 2, 512, 768])
+        flow = flow[0].numpy()
+        flow = np.swapaxes(np.swapaxes(flow, 0, 1), 1, 2)
+
+
         vid_dir = os.path.join(self.opts.target_dir, "JPEGImages", f'{self.vid_idx:05d}', f'{self.frame_idx:05d}.jpg')
         seg_dir = os.path.join(self.opts.target_dir, "Annotations", f'{self.vid_idx:05d}', f'{self.frame_idx:05d}.png')
 
         img.save(vid_dir)
         seg.save(seg_dir)
 
+        flow_save_dir = os.path.join(self.opts.target_dir, "OpticalFlow", f'{self.vid_idx:05d}', f'{self.frame_idx:05d}.flo')
 
-        torch.save(flow, os.path.join(self.opts.target_dir, "OpticalFlow", f'{self.vid_idx:05d}', f'{self.frame_idx:05d}.pt'))
+        #torch.save(flow, flow_save_dir)
+
+        writeFlowFile(flow_save_dir, flow)
 
     def generate(self):
 

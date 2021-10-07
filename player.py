@@ -4,6 +4,22 @@ import torch
 import numpy as np
 import matplotlib.pyplot as plt
 
+
+import numpy
+#adapted from http://stackoverflow.com/questions/28013200/reading-middlebury-flow-files-with-python-bytes-array-numpy
+# WARNING: this will work on little-endian architectures (eg Intel x86) only!
+def read_flo_file(fp):
+  with open(fp, 'rb') as f:
+    magic = numpy.fromfile(f, numpy.float32, count=1)
+    if 202021.25 != magic:
+      print('Magic number incorrect. Invalid .flo file', fp)
+    else:
+      w = numpy.fromfile(f, numpy.int32, count=1)[0]
+      h = numpy.fromfile(f, numpy.int32, count=1)[0]
+      data = numpy.fromfile(f, numpy.float32, count=2 * w * h)
+      data2D = data.reshape((h, w, 2))
+      return data2D
+
 def mesh_grid(B, H, W):
     # mesh grid
     x_base = torch.arange(0, W, dtype=torch.float32).repeat(B, H, 1)  # BHW
@@ -158,15 +174,13 @@ for i in range(seq_len -1):
 
     im_1 = np.array(Image.open(os.path.join(vid_dir, "JPEGImages", video_id, f"{i:05d}.jpg")))
     im_2 = np.array(Image.open(os.path.join(vid_dir, "JPEGImages", video_id, f"{i:05d}.jpg")))
-    flow = torch.load(os.path.join(vid_dir, "OpticalFlow", video_id, f"{i:05d}.pt"))
+
+    flow = read_flo_file(os.path.join(vid_dir, "OpticalFlow", video_id, f"{i:05d}.flo"))
+
     print("flow: ", flow.max())
-
-    flw = flow[0].numpy().transpose(1, 2, 0)
-
-    print(flw.min())
-    flow_out = flow_to_img(flw/473.)
-
-    print(flow_out)
+    # flw = flow[0].numpy().transpose(1, 2, 0)
+    # print(flw.min())
+    flow_out = flow_to_img(flow)
 
     axs[0].set_title("Image 1")
     axs[0].imshow(im_1)
