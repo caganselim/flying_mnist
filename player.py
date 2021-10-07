@@ -156,8 +156,8 @@ fig, axs = plt.subplots(1,6, figsize=(20,10))
 
 for i in range(seq_len -1):
 
-    im_1 = np.array(Image.open(os.path.join(vid_dir, "JPEGImages", video_id, f"{i:05d}.png")))
-    im_2 = np.array(Image.open(os.path.join(vid_dir, "JPEGImages", video_id, f"{i:05d}.png")))
+    im_1 = np.array(Image.open(os.path.join(vid_dir, "JPEGImages", video_id, f"{i:05d}.jpg")))
+    im_2 = np.array(Image.open(os.path.join(vid_dir, "JPEGImages", video_id, f"{i:05d}.jpg")))
     flow = torch.load(os.path.join(vid_dir, "OpticalFlow", video_id, f"{i:05d}.pt"))
     print("flow: ", flow.max())
 

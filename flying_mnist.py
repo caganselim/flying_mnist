@@ -58,7 +58,7 @@ class FlyingMNIST:
                 data = np.frombuffer(f.read(), np.uint8, offset=16)
 
             data = data.reshape(-1, 1, 28, 28).transpose(0, 1, 3, 2)
-            return data #/ np.float32(255)
+            return data
 
         def load_labels(filename):
 
@@ -288,8 +288,11 @@ class FlyingMNIST:
 
             # print("Digit height: ", height, " Digit width: ", width, " x: ", x, " y: ", y)
 
-            if x >= 473 or y >= 473 or x < -width or y < -height:
-                continue
+            # if x >= 473 or y >= 473 or x < -width or y < -height:
+            #     continue
+
+            if x >= self.opts.canv_width or y >= self.opts.canv_height or x < -width or y < -height:
+                 continue
 
             if x < 0:
 
@@ -387,6 +390,8 @@ class FlyingMNIST:
 
         img.save(vid_dir)
         seg.save(seg_dir)
+
+
         torch.save(flow, os.path.join(self.opts.target_dir, "OpticalFlow", f'{self.vid_idx:05d}', f'{self.frame_idx:05d}.pt'))
 
     def generate(self):
