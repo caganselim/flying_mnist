@@ -1,4 +1,6 @@
-# Flying MNIST: A Toy Dataset for Video Instance/Object Segmentation and Optical Flow
+# Flying MNIST: A Toy Dataset for Video Instance/Object Segmentation and Optical Flow+
+
+![](dataset.gif)
 
 ## Overview
 
@@ -10,9 +12,6 @@ The Flying MNIST dataset is a specialized resource crafted for video instance se
 * Optical Flow Data: Each sequence is paired with optical flow information, providing essential motion cues for accurate instance segmentation.
 * Variety of Scenarios: The dataset covers various scenarios, including digit interactions, occlusions, and complex trajectories.
 * Annotated Masks: Ground truth pixel-wise instance segmentation masks are included for evaluation and benchmarking purposes.
-
-![](dataset.gif)
-
 
 ## Creating the Dataset
 
